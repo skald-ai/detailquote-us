@@ -12,7 +12,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 import httpx
 from bs4 import BeautifulSoup
 
-from new_tenant import build_pitches, create_tenant_config
+from new_tenant import build_pitches, create_tenant_config, default_base_url, load_local_env, push_tenant_live
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
@@ -72,8 +72,10 @@ def search_duckduckgo_html(query: str, limit: int) -> list[ProspectInput]:
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
     }
     url = "https://html.duckduckgo.com/html/"
+    env = load_local_env()
+    proxy = env.get("HTTPS_PROXY") or env.get("HTTP_PROXY") or None
     try:
-        with httpx.Client(timeout=15.0, follow_redirects=True, headers=headers) as client:
+        with httpx.Client(timeout=15.0, follow_redirects=True, headers=headers, proxy=proxy) as client:
             resp = client.post(url, data={"q": query})
     except Exception as exc:
         print(f"[search] Network error querying DuckDuckGo HTML: {exc}")
@@ -140,9 +142,11 @@ def audit_prospect(item: ProspectInput) -> dict:
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
     }
+    env = load_local_env()
+    proxy = env.get("HTTPS_PROXY") or env.get("HTTP_PROXY") or None
     t0 = time.perf_counter()
     try:
-        with httpx.Client(timeout=12.0, follow_redirects=True, headers=headers) as client:
+        with httpx.Client(timeout=12.0, follow_redirects=True, headers=headers, proxy=proxy) as client:
             resp = client.get(item.url)
         elapsed_ms = int((time.perf_counter() - t0) * 1000)
     except Exception as exc:
@@ -244,11 +248,13 @@ def main() -> int:
     ap.add_argument("--urls", nargs="*", default=[], help="One or more prospect website URLs")
     ap.add_argument("--search", default="", help="Optional DuckDuckGo HTML search query (may rate-limit)")
     ap.add_argument("--limit", type=int, default=15)
-    ap.add_argument("--base-url", default="http://127.0.0.1:8787")
+    ap.add_argument("--base-url", default=None)
     ap.add_argument("--build-demos", action="store_true", help="Auto-create tenants/*.json for prospects scoring >= 50")
+    ap.add_argument("--push-live", action="store_true", help="Also push built demos live to Cloudflare D1")
     ap.add_argument("--out-dir", type=Path, default=ROOT_DIR / "outreach")
     args = ap.parse_args()
 
+    base_url = (args.base_url or default_base_url()).rstrip("/")
     prospects: list[ProspectInput] = []
     if args.input and args.input.is_file():
         prospects.extend(load_csv_inputs(args.input, args.limit))
@@ -297,11 +303,12 @@ def main() -> int:
     md_lines = [
         "# DetailQuote-US Prospect Audit & Outreach Pack",
         "",
-        f"Audited prospects: **{len(results)}** · Base demo URL: `{args.base_url.rstrip('/')}`",
+        f"Audited prospects: **{len(results)}** · Base demo URL: `{base_url}`",
         "",
     ]
 
     demos_created = 0
+    demos_pushed = 0
     for r in results:
         md_lines.append(f"## {r['name']} — Score {r['opportunity_score']}/100")
         md_lines.append(f"- **URL:** {r['url']} (HTTP {r['http_status']}, {r['response_ms']} ms)")
@@ -319,8 +326,11 @@ def main() -> int:
                 website=r["url"],
             )
             demos_created += 1
-            pitches = build_pitches(tenant, args.base_url)
-            md_lines.append(f"- **Personalized Demo:** `{args.base_url.rstrip('/')}/s/{tenant['slug']}` (Owner PIN `{tenant['owner_pin']}`)")
+            if args.push_live:
+                push_tenant_live(tenant, base_url)
+                demos_pushed += 1
+            pitches = build_pitches(tenant, base_url)
+            md_lines.append(f"- **Personalized Demo:** `{base_url}/s/{tenant['slug']}` (Owner PIN `{tenant['owner_pin']}`)")
             md_lines.append("")
             md_lines.append("```text")
             md_lines.append(pitches["instagram_dm"])
@@ -330,7 +340,7 @@ def main() -> int:
             md_lines.append("```text")
             md_lines.append(
                 f"Hey {r['name']} team — checked {r['url']} and saw {r['gaps'].lower()}. "
-                f"I mocked up a 60-second instant quote + photo booking page where car owners attach photos and get a price range before calling ({args.base_url.rstrip('/')}/s/apex-austin). Worth adapting to your pricing?"
+                f"I mocked up a 60-second instant quote + photo booking page where car owners attach photos and get a price range before calling ({base_url}/s/apex-austin). Worth adapting to your pricing?"
             )
             md_lines.append("```")
         md_lines.append("")
@@ -342,6 +352,8 @@ def main() -> int:
     print(f"Outreach Pack:  {md_out}")
     if args.build_demos:
         print(f"Demos created:  {demos_created}")
+    if args.push_live:
+        print(f"Demos pushed:   {demos_pushed}")
     return 0
 
 

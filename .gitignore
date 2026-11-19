@@ -1,5 +1,7 @@
 data/*.db
 data/.secret
+dist-cf/
+.wrangler/
 uploads/*
 !uploads/.gitkeep
 outreach/*

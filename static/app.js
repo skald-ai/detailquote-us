@@ -274,7 +274,7 @@
         const img = new Image();
         img.onerror = () => reject(new Error("Unsupported image format"));
         img.onload = () => {
-          const maxDim = 1280;
+          const maxDim = 1024;
           let { width, height } = img;
           if (width > maxDim || height > maxDim) {
             const ratio = Math.min(maxDim / width, maxDim / height);
@@ -286,7 +286,7 @@
           canvas.height = height;
           const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL("image/jpeg", 0.82));
+          resolve(canvas.toDataURL("image/jpeg", 0.78));
         };
         img.src = reader.result;
       };

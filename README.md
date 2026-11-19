@@ -1,35 +1,46 @@
-# DetailQuote-US — Multi-Tenant Mobile Detailing Quote PWA & US Dollar Outreach Engine
+<div align="center">
 
-Мультитенантный веб-продукт и конвейер поиска клиентов для долларового рынка США / Канады / Великобритании в нише **Mobile Car Detailing** (выездной детейлинг авто).
+# ✦ DetailQuote-US
 
-## 1. Почему эта модель сильнее кейса из видео
-- **Один сервер вместо десятков VPS:** все клиенты живут на одном лёгком FastAPI + SQLite сервере по адресам `/s/<slug>`, а не на отдельных VPS с «левыми почтами».
-- **Долларовый чек вместо 4 900 ₽:** в США один спасённый выездной заказ приносит детейлеру `$180–$750`, поэтому настройка за **`$299–$499` + `$49/мес`** окупается с первого клиента.
-- **Нет телефонной игры и потери фото:** клиент выбирает кузов, пакет, состояние, крепит до 4 фото дефектов, получает ориентировочную вилку и живую ссылку заказа.
-- **Момент удержания без тяжёлого 3D:** на странице статуса клиент стирает пальцем слой пыли (`<canvas>`) и активирует бонусный кредит (`-$25`) к записи; у владельца — кабинет с фото, подтверждением точной цены и 1-кликовой отправкой SMS со ссылкой.
+### Multi-tenant mobile detailing instant quote PWA, owner cabinet & US outreach engine
 
----
+[![Stars](https://img.shields.io/github/stars/skald-ai/detailquote-us?style=for-the-badge&color=c4b5fd&labelColor=19152e)](https://github.com/skald-ai/detailquote-us/stargazers)
+[![Forks](https://img.shields.io/github/forks/skald-ai/detailquote-us?style=for-the-badge&color=a5b4fc&labelColor=19152e)](https://github.com/skald-ai/detailquote-us/forks)
+[![Issues](https://img.shields.io/github/issues/skald-ai/detailquote-us?style=for-the-badge&color=f0abfc&labelColor=19152e)](https://github.com/skald-ai/detailquote-us/issues)
+[![Pull Requests](https://img.shields.io/github/issues-pr/skald-ai/detailquote-us?style=for-the-badge&color=c4b5fd&labelColor=19152e)](https://github.com/skald-ai/detailquote-us/pulls)
 
-## 2. Быстрый старт на компьютере
+[Live Demo](https://detailquote-us.pages.dev/demos) · [Quick Start](#-quick-start) · [Stack](#-architecture--stack) · [Playbook](docs/PLAYBOOK.md) · [Issues](https://github.com/skald-ai/detailquote-us/issues)
 
-Зависимости: `fastapi`, `uvicorn`, `httpx`, `beautifulsoup4` (Python 3.11+).
-
-```powershell
-cd D:\AI-Agents-Lab\projects\DetailQuote-US
-.\start.cmd
-```
-
-Откройте в браузере:
-- **Демо клиента (Austin, TX):** `http://127.0.0.1:8787/s/apex-austin`
-- **Демо клиента (Miami, FL):** `http://127.0.0.1:8787/s/harbor-miami`
-- **Кабинет владельца (демо PIN `2026`):** `http://127.0.0.1:8787/s/apex-austin/owner`
-- **Витрина всех демо (Agency Hub):** `http://127.0.0.1:8787/demos`
-
-> Если включена встроенная база, при первом старте автоматически создаются 2 реалистичных демо-лида для `apex-austin` (`DQ-7482AT` и `DQ-6194SY`), чтобы кабинет владельца сразу не выглядел пустым при созвоне или записи скринкаста.
+</div>
 
 ---
 
-## 3. Как клонировать демо под реального клиента за 10 секунд
+## ✧ Overview
+
+**DetailQuote-US** replaces slow "call or DM for a quote" back-and-forth for US mobile car detailers with a mobile-first PWA work-order builder. Car owners choose vehicle class, package, condition, and up to 4 photos, receive a live price range, and track their appointment on a real-time status page with a tactile wipe-to-reveal booking credit.
+
+- **Agency Demo Hub:** [detailquote-us.pages.dev/demos](https://detailquote-us.pages.dev/demos)
+- **Customer Quote PWA (Austin):** [detailquote-us.pages.dev/s/apex-austin](https://detailquote-us.pages.dev/s/apex-austin)
+- **Customer Quote PWA (Miami):** [detailquote-us.pages.dev/s/harbor-miami](https://detailquote-us.pages.dev/s/harbor-miami)
+- **Owner Dispatch Cabinet (Demo PIN `2026`):** [detailquote-us.pages.dev/s/apex-austin/owner](https://detailquote-us.pages.dev/s/apex-austin/owner)
+
+---
+
+## ✧ Architecture & Stack
+
+| Layer | Implementation | Purpose |
+| :--- | :--- | :--- |
+| ◇ **Edge Production** | Cloudflare Pages `_worker.js` + Cloudflare D1 | Multi-tenant `/s/:slug` routing, photo storage & instant live demos |
+| ◇ **Local Dev Parity** | Python FastAPI + SQLite (`app.py`) | Zero-dependency local debugging & offline testing |
+| ◇ **Customer PWA** | Vanilla JS + CSS + SVG Vehicle Inspector + `<canvas>` | Sub-second load, 4-photo resize upload, wipe-to-reveal booking credit |
+| ◇ **Owner Cabinet** | PIN + HMAC-SHA256 session token | Inspect photos, confirm exact price & slot, 1-tap `sms:` link & live tariffs |
+| ◇ **Outreach Engine** | `tools/new_tenant.py` + `tools/prospect_audit.py` | Detect missing quote flows on prospect sites and push branded demos live |
+
+---
+
+## ✦ Quick Start
+
+### 1 · Clone a branded live demo in 10 seconds
 
 ```powershell
 python -X utf8 tools/new_tenant.py `
@@ -38,69 +49,48 @@ python -X utf8 tools/new_tenant.py `
   --state "TX" `
   --phone "+1 (214) 555-0177" `
   --instagram "@lonestardetail" `
-  --accent "#e59934" `
-  --full 275 `
-  --ceramic 650 `
-  --base-url "https://your-demo-domain.com"
+  --push-live
 ```
 
-Скрипт создаст `tenants/lone-star-mobile-detail-dallas.json` и сразу напечатает:
-1. Персональную ссылку для клиента (`/s/...`).
-2. Ссылку на кабинет владельца + PIN.
-3. Три готовых коротких сообщения на английском: Instagram DM, SMS и Cold Email.
+### 2 · Run locally (FastAPI + SQLite)
+
+```powershell
+pip install -r requirements.txt
+python -X utf8 app.py
+```
+
+Open `http://127.0.0.1:8787/demos` to inspect all local tenant demos and the Owner Cabinet.
+
+### 3 · Deploy updates to Cloudflare Pages + D1
+
+```powershell
+python -X utf8 deploy_cf.py
+```
+
+> [!NOTE]
+> Set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` in your environment before running `deploy_cf.py`. Generated `DETAILQUOTE_SECRET` and `DETAILQUOTE_ADMIN_KEY` values stay in the gitignored `.env` file and are uploaded as encrypted Cloudflare Pages secrets.
 
 ---
 
-## 4. Как искать «горячих» клиентов в США и автоматизировать аутрич
+## ✧ Outreach & Prospect Audit CLI
 
-Скрипт `tools/prospect_audit.py` проверяет сайты детейлеров, ищет отсутствие мгновенного калькулятора (`No instant quote / Call for quote / Free estimate`), собирает телефоны, email, Instagram и считает `opportunity_score` от `0` до `100`.
+<details>
+<summary>Audit US detailing websites and auto-publish personalized demos</summary>
 
-### Вариант А — по списку сайтов или CSV (из Google Maps / Outscraper / ручного сбора)
 ```powershell
-python -X utf8 tools/prospect_audit.py `
-  --urls https://example-detailer1.com https://example-detailer2.com `
-  --base-url "https://your-demo-domain.com" `
-  --build-demos
-```
-Или из CSV с колонками `name,url,city,state,phone,instagram`:
-```powershell
-python -X utf8 tools/prospect_audit.py --input prospects.csv --build-demos --base-url "https://your-demo-domain.com"
+# Audit from a CSV (name,url,city,state,phone,instagram) and push demos >= 50 score live
+python -X utf8 tools/prospect_audit.py --input prospects.csv --build-demos --push-live
+
+# Audit explicit URLs
+python -X utf8 tools/prospect_audit.py --urls https://example-detailer.com --build-demos --push-live
 ```
 
-### Вариант Б — быстрый поиск через HTML-выдачу (при лимите/капче вернётся в Вариант А)
-```powershell
-python -X utf8 tools/prospect_audit.py --search "mobile car detailing Austin TX" --limit 15
-```
+Generated reports are written to `outreach/audit_report.csv` and `outreach/outreach_pack.md`.
 
-На выходе в папке `outreach/` появятся:
-- `audit_report.csv` — таблица с рейтингом «дыр» каждого бизнеса;
-- `outreach_pack.md` — готовые персональные письма с упоминанием конкретной проблемы на сайте клиента и его личной демо-ссылкой (если включён `--build-demos`).
+</details>
 
 ---
 
-## 5. Как показать демо американцу вживую (HTTPS за 30 секунд)
+## ✧ Documentation
 
-Не отправляйте клиентам `http://127.0.0.1:8787` — пока у вас нет VPS, откройте временный HTTPS-туннель на ваш локальный порт `8787`:
-```powershell
-cloudflared tunnel --url http://127.0.0.1:8787
-```
-Cloudflare выдаст публичную ссылку вида `https://xxxx.trycloudflare.com`, которую можно сразу передавать в `--base-url` и вставлять в письма. Когда появятся первые 1–2 оплаты, перенесите папку на один VPS за \$5–\$6/мес с Nginx + Let's Encrypt и привяжите свой домен.
-
-### Уведомления владельцу в Telegram / Webhook
-В `tenants/<slug>.json` (или через переменные окружения `DETAILQUOTE_TG_BOT_TOKEN`, `DETAILQUOTE_TG_CHAT_ID`, `DETAILQUOTE_WEBHOOK_URL`) можно прописать токен Telegram-бота или URL вебхука (n8n / Make / Twilio SMS): каждая новая заявка сразу улетит владельцу со ссылкой на кабинет.
-
----
-
-## 6. Ежедневный 60-минутный конвейер и легальный приём USD (без 115-ФЗ)
-
-### Рутина на каждый день (цель: 20–30 касаний/день)
-1. **15 мин:** Соберите 20–30 мобильных детейлеров в одном городе США (Austin, Dallas, Phoenix, Tampa, Charlotte, Denver — без перенасыщенных гигантов вроде LA/NYC на старте).
-2. **10 мин:** Прогоните их через `prospect_audit.py --build-demos` и отберите тех, у кого нет онлайн-калькулятора, но живой Instagram/отзывы.
-3. **35 мин:** Отправьте персональные Instagram DM / Cold Email с готовой ссылкой на **их собственное демо** (а не абстрактный сайт).
-
-### Как принимать доллары легально (без блокировок личных карт)
-Никогда не принимайте десятки переводов от клиентов на личную карту физлица. Рабочие схемы под USD:
-1. **Upwork Direct Contracts / Fiverr Custom Offer:** самый быстрый старт без открытия компании за рубежом. Клиент из США платит картой/Apple Pay в долларах (эскроу), вы выводите средства легально доступным для вашей юрисдикции каналом; комиссия ~5–10%.
-2. **Merchant of Record (Lemon Squeezy / Paddle / Whop):** подходят для продажи софта и ежемесячной подписки (`$49/мес`), берут на себя налоги и чеки. *Перед запуском обязательно проверьте актуальные правила верификации для вашего паспорта/страны.*
-3. **US LLC (Wyoming/Delaware) + Mercury/Wise Business + Stripe:** целевой вариант, когда уже есть стабильные 5+ клиентов.
-4. **Крипта (USDC / USDT в сетях Base / Arbitrum / Tron):** как запасной вариант для разового чека, если клиент из сферы tech/crypto-friendly или работает по B2B-инвойсу, но для обычных американских владельцев автосервисов конверсия выше всего по ссылке с оплатой картой (варианты 1–3).
+- [Operations, US Outreach & USD Payment Playbook (RU)](docs/PLAYBOOK.md)

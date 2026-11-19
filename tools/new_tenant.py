@@ -1,4 +1,4 @@
-"""Create a branded DetailQuote-US tenant config and outreach messages."""
+"""Create a branded DetailQuote-US tenant config, optionally push live to Cloudflare D1, and print outreach messages."""
 from __future__ import annotations
 
 import argparse
@@ -7,9 +7,31 @@ import os
 import re
 from pathlib import Path
 
+import httpx
+
 ROOT_DIR = Path(__file__).resolve().parent.parent
 TENANTS_DIR = ROOT_DIR / "tenants"
 TEMPLATE_PATH = TENANTS_DIR / "template.json"
+
+
+def load_local_env() -> dict[str, str]:
+    values: dict[str, str] = {}
+    env_file = ROOT_DIR / ".env"
+    if env_file.is_file():
+        for line in env_file.read_text(encoding="utf-8", errors="replace").splitlines():
+            s = line.strip()
+            if not s or s.startswith("#") or "=" not in s:
+                continue
+            k, v = s.split("=", 1)
+            values[k.strip()] = v.strip().strip('"').strip("'")
+    for k, v in os.environ.items():
+        values.setdefault(k, v)
+    return values
+
+
+def default_base_url() -> str:
+    env = load_local_env()
+    return env.get("DETAILQUOTE_LIVE_URL") or "https://detailquote-us.pages.dev"
 
 
 def slugify(text: str) -> str:
@@ -73,6 +95,20 @@ def create_tenant_config(
     return data
 
 
+def push_tenant_live(tenant: dict, base_url: str, admin_key: str | None = None) -> dict:
+    env = load_local_env()
+    key = (admin_key or env.get("DETAILQUOTE_ADMIN_KEY") or "").strip()
+    if not key:
+        raise RuntimeError("DETAILQUOTE_ADMIN_KEY is not set in environment or .env")
+    proxy = env.get("HTTPS_PROXY") or env.get("HTTP_PROXY") or None
+    endpoint = f"{base_url.rstrip('/')}/api/admin/tenants"
+    with httpx.Client(timeout=15.0, proxy=proxy, follow_redirects=True) as client:
+        resp = client.post(endpoint, headers={"X-Admin-Key": key}, json=tenant)
+    if resp.status_code >= 400:
+        raise RuntimeError(f"Push live failed ({resp.status_code}): {resp.text[:300]}")
+    return resp.json()
+
+
 def build_pitches(tenant: dict, base_url: str) -> dict[str, str]:
     base = base_url.rstrip("/")
     demo_url = f"{base}/s/{tenant['slug']}"
@@ -119,9 +155,11 @@ def main() -> int:
     ap.add_argument("--promo", type=int, default=None)
     ap.add_argument("--pin", default="2026")
     ap.add_argument("--slug", default=None)
-    ap.add_argument("--base-url", default="http://127.0.0.1:8787")
+    ap.add_argument("--base-url", default=None)
+    ap.add_argument("--push-live", action="store_true", help="Publish tenant directly to live Cloudflare D1 via /api/admin/tenants")
     args = ap.parse_args()
 
+    base_url = (args.base_url or default_base_url()).rstrip("/")
     tenant = create_tenant_config(
         name=args.name,
         city=args.city,
@@ -138,12 +176,14 @@ def main() -> int:
         pin=args.pin,
         slug=args.slug,
     )
-    pitches = build_pitches(tenant, args.base_url)
-    base = args.base_url.rstrip("/")
+    if args.push_live:
+        res = push_tenant_live(tenant, base_url)
+        print(f"Pushed live:    {res.get('customer_url')}")
 
+    pitches = build_pitches(tenant, base_url)
     print(f"Created tenant: {TENANTS_DIR / (tenant['slug'] + '.json')}")
-    print(f"Customer PWA:   {base}/s/{tenant['slug']}")
-    print(f"Owner Cabinet:  {base}/s/{tenant['slug']}/owner (PIN: {tenant['owner_pin']})")
+    print(f"Customer PWA:   {base_url}/s/{tenant['slug']}")
+    print(f"Owner Cabinet:  {base_url}/s/{tenant['slug']}/owner (PIN: {tenant['owner_pin']})")
     print("\n--- Instagram DM ---")
     print(pitches["instagram_dm"])
     print("\n--- SMS ---")
