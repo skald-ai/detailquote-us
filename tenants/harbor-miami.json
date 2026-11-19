@@ -1,0 +1,133 @@
+{
+  "slug": "harbor-miami",
+  "shop_name": "Harbor Shine Miami",
+  "tagline": "Salt-air ceramic protection & cabin care at your driveway or marina",
+  "city": "Miami",
+  "state": "FL",
+  "phone": "+1 (305) 555-0192",
+  "sms_phone": "+13055550192",
+  "instagram": "@harborshinemia",
+  "website": "https://harborshinemia.example",
+  "currency": "$",
+  "accent_color": "#3898c8",
+  "next_slot_label": "Next opening: Fri 9:00 AM",
+  "service_radius": "20 mi across Miami-Dade & Brickell",
+  "promo_credit": 30,
+  "promo_label": "First mobile booking credit",
+  "owner_pin": "2026",
+  "telegram_bot_token": "",
+  "telegram_chat_id": "",
+  "webhook_url": "",
+  "vehicles": [
+    {
+      "id": "sedan",
+      "label": "Sedan",
+      "subtitle": "4-door compact & executive",
+      "multiplier": 1.0
+    },
+    {
+      "id": "coupe",
+      "label": "Coupe",
+      "subtitle": "2-door sports & exotic",
+      "multiplier": 1.0
+    },
+    {
+      "id": "suv",
+      "label": "SUV / Crossover",
+      "subtitle": "Luxury & 3-row SUV",
+      "multiplier": 1.25
+    },
+    {
+      "id": "truck",
+      "label": "Pickup / Sprinter",
+      "subtitle": "Full-size truck & utility van",
+      "multiplier": 1.35
+    }
+  ],
+  "packages": [
+    {
+      "id": "interior_reset",
+      "name": "Interior Deep Reset",
+      "duration": "2.5 hrs",
+      "summary": "UV leather nourish, sand extraction, steam sanitize & interior glass",
+      "base_price": 175,
+      "zones": ["interior"]
+    },
+    {
+      "id": "exterior_gloss",
+      "name": "Coastal Wash & Sealant",
+      "duration": "2 hrs",
+      "summary": "Salt-neutralizing wash, iron decon, wheel barrels & polymer gloss coat",
+      "base_price": 145,
+      "zones": ["exterior", "wheels"]
+    },
+    {
+      "id": "full_detail",
+      "name": "Full Interior & Exterior",
+      "duration": "4 hrs",
+      "summary": "Inside-out driveway reset tailored for South Florida heat & humidity",
+      "base_price": 285,
+      "zones": ["interior", "exterior", "wheels"]
+    },
+    {
+      "id": "ceramic_prep",
+      "name": "1-Step Polish & Ceramic",
+      "duration": "6 hrs",
+      "summary": "Swirl correction plus hydrophobic ceramic shield on paint & rims",
+      "base_price": 690,
+      "zones": ["exterior", "wheels", "paint"]
+    }
+  ],
+  "conditions": [
+    {
+      "id": "light",
+      "label": "Light dust",
+      "note": "Garage-kept or washed recently",
+      "multiplier": 1.0
+    },
+    {
+      "id": "moderate",
+      "label": "Daily driver",
+      "note": "Beach sand, bugs & light marks",
+      "multiplier": 1.15
+    },
+    {
+      "id": "heavy",
+      "label": "Heavy soil / pet",
+      "note": "Deep stains, pet hair, or heavy grime",
+      "multiplier": 1.35
+    }
+  ],
+  "addons": [
+    {
+      "id": "pet_hair",
+      "name": "Pet Hair Removal",
+      "price": 60,
+      "zone": "interior"
+    },
+    {
+      "id": "ozone",
+      "name": "Ozone Odor Treatment",
+      "price": 75,
+      "zone": "interior"
+    },
+    {
+      "id": "engine_bay",
+      "name": "Engine Bay Detail",
+      "price": 55,
+      "zone": "paint"
+    },
+    {
+      "id": "headlights",
+      "name": "Headlight Restoration",
+      "price": 80,
+      "zone": "exterior"
+    },
+    {
+      "id": "seat_extract",
+      "name": "Deep Stain Extraction",
+      "price": 65,
+      "zone": "interior"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+data/*.db
+data/.secret
+uploads/*
+!uploads/.gitkeep
+outreach/*
+!outreach/.gitkeep
+__pycache__/
+*.pyc
+.env

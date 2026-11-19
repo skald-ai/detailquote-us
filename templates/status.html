@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#141415">
+  <title>Work order __ORDER_CODE__ — __SHOP_NAME__</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/app.css">
+  <style>:root { --accent: __ACCENT_COLOR__; }</style>
+</head>
+<body data-order-code="__ORDER_CODE__" data-slug="__TENANT_SLUG__">
+  <div class="shell-narrow">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name" id="shopName">__SHOP_NAME__</div>
+          <div class="brand-meta tabular">Order __ORDER_CODE__</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <a class="nav-link" href="/s/__TENANT_SLUG__">New estimate</a>
+      </div>
+    </header>
+
+    <div class="stack-24">
+      <section class="card">
+        <div class="section-head">
+          <div>
+            <div class="section-meta" style="margin-bottom: 4px;">Live booking tracker</div>
+            <h1 class="page-title" id="statusHeadline" style="font-size: 24px; line-height: 28px; margin: 0;">Request received</h1>
+          </div>
+          <span class="badge status-new tabular" id="statusBadge">new</span>
+        </div>
+
+        <div class="stepper" id="stepper">
+          <div class="step-box" data-step="new">
+            <div class="option-title" style="font-size: 13px;">1. Received</div>
+            <div class="option-sub">Photos & specs logged</div>
+          </div>
+          <div class="step-box" data-step="quoted">
+            <div class="option-title" style="font-size: 13px;">2. Quote confirmed</div>
+            <div class="option-sub">Exact total reviewed</div>
+          </div>
+          <div class="step-box" data-step="confirmed">
+            <div class="option-title" style="font-size: 13px;">3. Scheduled</div>
+            <div class="option-sub">Mobile van assigned</div>
+          </div>
+        </div>
+
+        <div class="card-deep" style="padding: 16px;">
+          <div class="field-grid">
+            <div>
+              <div class="section-meta" id="priceLabel">Preliminary estimate</div>
+              <div class="estimate-figure tabular" id="priceDisplay" style="font-size: 28px; margin: 4px 0 0;">$0 – $0</div>
+            </div>
+            <div>
+              <div class="section-meta">Arrival slot</div>
+              <div id="slotDisplay" style="font-size: 16px; font-weight: 500; margin-top: 6px; color: var(--text);">Pending shop confirmation</div>
+            </div>
+          </div>
+          <div class="section-meta hidden" id="ownerNoteBox" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--hairline); color: var(--text-secondary);"></div>
+        </div>
+      </section>
+
+      <section class="card" id="promoCard">
+        <div class="section-head">
+          <h2 class="section-title" id="promoTitle">Wipe dust to reveal booking credit</h2>
+          <span class="section-meta tabular" id="promoStateLabel">Locked</span>
+        </div>
+        <div class="wipe-wrap" id="wipeWrap">
+          <div class="wipe-under">
+            <div class="tabular" id="promoAmount" style="font-size: 28px; font-weight: 500; color: var(--positive);">-$25 credit</div>
+            <div class="option-sub" id="promoSub" style="font-size: 13px; color: var(--text-secondary);">First mobile booking credit saved to this order</div>
+          </div>
+          <canvas class="wipe-canvas" id="wipeCanvas"></canvas>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px;">
+          <span class="section-meta" id="wipeHint">Rub across the dust layer with finger or mouse</span>
+          <button type="button" class="btn btn-secondary btn-sm" id="revealBtn">Reveal credit</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2 class="section-title">Work order summary</h2>
+          <button type="button" class="btn btn-secondary btn-sm" id="refreshBtn">Refresh status</button>
+        </div>
+        <div class="summary-rows" id="orderDetails" style="margin-top: 0; border-top: none; padding-top: 0;"></div>
+        <div class="photo-thumbs hidden" id="orderPhotos"></div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px;">
+          <a class="btn btn-primary" id="callShopBtn" href="#">Call shop</a>
+          <a class="btn btn-secondary" id="smsShopBtn" href="#">Text shop</a>
+          <button type="button" class="btn btn-secondary" id="copyOrderLinkBtn">Copy tracking link</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="/static/status.js" defer></script>
+</body>
+</html>
