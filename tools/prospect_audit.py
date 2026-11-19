@@ -248,8 +248,9 @@ def main() -> int:
     ap.add_argument("--urls", nargs="*", default=[], help="One or more prospect website URLs")
     ap.add_argument("--search", default="", help="Optional DuckDuckGo HTML search query (may rate-limit)")
     ap.add_argument("--limit", type=int, default=15)
+    ap.add_argument("--max-demos", type=int, default=15, help="Max live personalized demos to build/push")
     ap.add_argument("--base-url", default=None)
-    ap.add_argument("--build-demos", action="store_true", help="Auto-create tenants/*.json for prospects scoring >= 50")
+    ap.add_argument("--build-demos", action="store_true", help="Auto-create outreach/tenants/*.json for HTTP 200 prospects scoring >= 50")
     ap.add_argument("--push-live", action="store_true", help="Also push built demos live to Cloudflare D1")
     ap.add_argument("--out-dir", type=Path, default=ROOT_DIR / "outreach")
     args = ap.parse_args()
@@ -309,14 +310,23 @@ def main() -> int:
 
     demos_created = 0
     demos_pushed = 0
+    out_tenants_dir = args.out_dir / "tenants"
     for r in results:
         md_lines.append(f"## {r['name']} — Score {r['opportunity_score']}/100")
+        md_lines.append(f"- **Location:** {r['city']}, {r['state']}")
         md_lines.append(f"- **URL:** {r['url']} (HTTP {r['http_status']}, {r['response_ms']} ms)")
         md_lines.append(f"- **Detected widget:** {r['booking_widget']} · **Mobile viewport:** {r['has_viewport']}")
         md_lines.append(f"- **Contacts:** phone `{r['phone'] or 'n/a'}` · email `{r['email'] or 'n/a'}` · IG `{r['instagram'] or 'n/a'}`")
+        if r["sample_prices"]:
+            md_lines.append(f"- **Sample prices found:** {r['sample_prices']}")
         md_lines.append(f"- **Gaps:** {r['gaps']}")
 
-        if args.build_demos and r["opportunity_score"] >= 50:
+        if (
+            args.build_demos
+            and r["http_status"] == 200
+            and r["opportunity_score"] >= 50
+            and demos_created < args.max_demos
+        ):
             tenant = create_tenant_config(
                 name=r["name"],
                 city=r["city"],
@@ -324,16 +334,27 @@ def main() -> int:
                 phone=r["phone"] or "+1 (512) 555-0199",
                 instagram=r["instagram"],
                 website=r["url"],
+                output_dir=out_tenants_dir,
             )
             demos_created += 1
             if args.push_live:
                 push_tenant_live(tenant, base_url)
                 demos_pushed += 1
-            pitches = build_pitches(tenant, base_url)
-            md_lines.append(f"- **Personalized Demo:** `{base_url}/s/{tenant['slug']}` (Owner PIN `{tenant['owner_pin']}`)")
+            pitches = build_pitches(tenant, base_url, gap_note=r["gaps"])
+            md_lines.append(f"- **Personalized Demo:** {base_url}/s/{tenant['slug']} (Owner PIN `{tenant['owner_pin']}`)")
+            md_lines.append(f"- **Owner Cabinet:** {base_url}/s/{tenant['slug']}/owner")
             md_lines.append("")
+            md_lines.append("**Instagram DM:**")
             md_lines.append("```text")
             md_lines.append(pitches["instagram_dm"])
+            md_lines.append("```")
+            md_lines.append("**SMS:**")
+            md_lines.append("```text")
+            md_lines.append(pitches["sms"])
+            md_lines.append("```")
+            md_lines.append("**Cold Email:**")
+            md_lines.append("```text")
+            md_lines.append(pitches["cold_email"])
             md_lines.append("```")
         else:
             md_lines.append("")

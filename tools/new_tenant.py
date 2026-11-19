@@ -55,6 +55,7 @@ def create_tenant_config(
     promo: int | None = None,
     pin: str = "2026",
     slug: str | None = None,
+    output_dir: Path | None = None,
 ) -> dict:
     data = json.loads(TEMPLATE_PATH.read_text(encoding="utf-8"))
     final_slug = slugify(slug or f"{name}-{city}")
@@ -88,7 +89,9 @@ def create_tenant_config(
         if override is not None:
             pkg["base_price"] = int(override)
 
-    target = TENANTS_DIR / f"{final_slug}.json"
+    dest_dir = output_dir or TENANTS_DIR
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    target = dest_dir / f"{final_slug}.json"
     tmp = target.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     os.replace(tmp, target)
@@ -109,27 +112,29 @@ def push_tenant_live(tenant: dict, base_url: str, admin_key: str | None = None) 
     return resp.json()
 
 
-def build_pitches(tenant: dict, base_url: str) -> dict[str, str]:
+def build_pitches(tenant: dict, base_url: str, gap_note: str | None = None) -> dict[str, str]:
     base = base_url.rstrip("/")
     demo_url = f"{base}/s/{tenant['slug']}"
     owner_url = f"{base}/s/{tenant['slug']}/owner"
     name = tenant["shop_name"]
     city = tenant["city"]
+    gap_text = gap_note.strip() if gap_note else "car owners still have to call or message for a ballpark price"
     return {
         "instagram_dm": (
             f"Hey {name} team — saw your mobile detailing work in {city}. "
-            f"Notice folks still have to DM or call to ask 'how much for my SUV?'. "
+            f"Checked your site and noticed {gap_text.lower()}. "
             f"I mocked up a 60-second instant quote + photo booking page with {name}'s name and area here: {demo_url} "
             f"(owner cabinet: {owner_url}, PIN {tenant['owner_pin']}). Worth a 20-second look?"
         ),
         "sms": (
-            f"Hi {name}, quick idea: I built a live instant-quote & photo upload link tailored for your {city} mobile detailing jobs ({demo_url}) "
+            f"Hi {name}, quick idea: checked your site and saw {gap_text.lower()}. "
+            f"I built a live instant-quote & photo upload link tailored for your {city} mobile jobs ({demo_url}) "
             f"so customers send car photos + address before you call back. Happy to set it up on your domain if you like it."
         ),
         "cold_email": (
             f"Subject: Instant photo-quote page I built for {name}\n\n"
             f"Hi {name} team,\n\n"
-            f"While checking {city} mobile detailers, I noticed leads have to call or message back-and-forth just to get a ballpark price and share stain photos.\n\n"
+            f"While checking {city} mobile detailers, I reviewed your website and noticed {gap_text.lower()} — meaning leads have to call or message back-and-forth just to share stain photos and get a range.\n\n"
             f"I put together a working mobile web app under {name}'s name here:\n"
             f"- Customer quote page: {demo_url}\n"
             f"- Owner dispatch cabinet (PIN {tenant['owner_pin']}): {owner_url}\n\n"
